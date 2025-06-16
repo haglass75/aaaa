@@ -1,9 +1,9 @@
+// src/i18n/index.js
 import { createI18n } from "vue-i18n";
 
-// 지원 언어 목록
-export const SUPPORTED_LANGUAGES = ["ko", "en", "ja"];
+const DEFAULT_LANGUAGE = "ko";
+const SUPPORTED_LANGUAGES = ["ko", "en", "ja"];
 
-// 번역 메시지
 const messages = {
   ko: {
     settings: {
@@ -178,50 +178,20 @@ const messages = {
   },
 };
 
-// Vercel 환경에 최적화된 초기 언어 설정
-const getInitialLanguage = () => {
-  // localStorage 완전 제거, 브라우저 언어 우선, 없으면 ko
-  if (typeof window === "undefined") return "ko";
-  const browserLang = navigator.language?.split("-")[0];
-  if (SUPPORTED_LANGUAGES.includes(browserLang)) return browserLang;
-  return "ko";
+const getInitialLocale = () => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem("language");
+    if (SUPPORTED_LANGUAGES.includes(saved)) return saved;
+    localStorage.setItem("language", DEFAULT_LANGUAGE);
+  }
+  return DEFAULT_LANGUAGE;
 };
 
-// i18n 인스턴스 생성
 const i18n = createI18n({
   legacy: false,
-  locale: getInitialLanguage(),
-  fallbackLocale: "ko",
+  locale: getInitialLocale(),
+  fallbackLocale: DEFAULT_LANGUAGE,
   messages,
-  globalInjection: true,
-  silentTranslationWarn: true,
-  silentFallbackWarn: true,
-  missingWarn: false,
-  fallbackWarn: false,
 });
-
-// 강제 언어 변경 함수
-export const forceChangeLanguage = (lang) => {
-  if (SUPPORTED_LANGUAGES.includes(lang)) {
-    console.log("강제 언어 변경:", lang);
-
-    // i18n locale 변경
-    i18n.global.locale.value = lang;
-
-    // 강제 리렌더링을 위한 이벤트 발생
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("language-changed", {
-          detail: { language: lang },
-        })
-      );
-
-      // 페이지 리로드 없이 강제 업데이트
-      document.dispatchEvent(new Event("DOMContentLoaded"));
-    }
-
-    console.log("강제 언어 변경 완료:", lang);
-  }
-};
 
 export default i18n;
